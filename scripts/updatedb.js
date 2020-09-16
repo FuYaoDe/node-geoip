@@ -210,7 +210,7 @@ function fetch(database, cb) {
 		return cb(null, null, null, database);
 	}
 
-	var downloadUrl = database.url;
+	// var downloadUrl = database.url;
 	var fileName = database.fileName;
 	var gzip = path.extname(fileName) === '.gz';
 
@@ -224,37 +224,37 @@ function fetch(database, cb) {
 		return cb(null, tmpFile, fileName, database);
 	}
 
-	console.log('Fetching ', fileName);
+	// console.log('Fetching ', fileName);
 
-	function onResponse(response) {
-		var status = response.statusCode;
+	// function onResponse(response) {
+	// 	var status = response.statusCode;
 
-		if (status !== 200) {
-			console.log('ERROR'.red + ': HTTP Request Failed [%d %s]', status, http.STATUS_CODES[status]);
-			client.abort();
-			process.exit();
-		}
+	// 	if (status !== 200) {
+	// 		console.log('ERROR'.red + ': HTTP Request Failed [%d %s]', status, http.STATUS_CODES[status]);
+	// 		client.abort();
+	// 		process.exit();
+	// 	}
 
-		var tmpFilePipe;
-		var tmpFileStream = fs.createWriteStream(tmpFile);
+	// 	var tmpFilePipe;
+	// 	var tmpFileStream = fs.createWriteStream(tmpFile);
 
-		if (gzip) {
-			tmpFilePipe = response.pipe(zlib.createGunzip()).pipe(tmpFileStream);
-		} else {
-			tmpFilePipe = response.pipe(tmpFileStream);
-		}
+	// 	if (gzip) {
+	// 		tmpFilePipe = response.pipe(zlib.createGunzip()).pipe(tmpFileStream);
+	// 	} else {
+	// 		tmpFilePipe = response.pipe(tmpFileStream);
+	// 	}
 
-		tmpFilePipe.on('close', function() {
-			console.log(' DONE'.green);
-			cb(null, tmpFile, fileName, database);
-		});
-	}
+	// 	tmpFilePipe.on('close', function() {
+	// 		console.log(' DONE'.green);
+	// 		cb(null, tmpFile, fileName, database);
+	// 	});
+	// }
 
-	mkdir(tmpFile);
+	// mkdir(tmpFile);
 
-	var client = https.get(getHTTPOptions(downloadUrl), onResponse);
+	// var client = https.get(getHTTPOptions(downloadUrl), onResponse);
 
-	process.stdout.write('Retrieving ' + fileName + ' ...');
+	// process.stdout.write('Retrieving ' + fileName + ' ...');
 }
 
 function extract(tmpFile, tmpFileName, database, cb) {
@@ -388,7 +388,7 @@ function processCountryData(src, dest, cb) {
 	var dataFile = path.join(dataPath, dest);
 	var tmpDataFile = path.join(tmpPath, src);
 
-	rimraf(dataFile);
+	// rimraf(dataFile);
 	mkdir(dataFile);
 
 	process.stdout.write('Processing Data (may take a moment) ...');
@@ -497,7 +497,7 @@ function processCityData(src, dest, cb) {
 	var dataFile = path.join(dataPath, dest);
 	var tmpDataFile = path.join(tmpPath, src);
 
-	rimraf(dataFile);
+	// rimraf(dataFile);
 
 	process.stdout.write('Processing Data (may take a moment) ...');
 	var tstart = Date.now();
@@ -514,6 +514,9 @@ function processCityData(src, dest, cb) {
 }
 
 function processCityDataNames(src, dest, cb) {
+  console.log('Log: -------------------------------------');
+  console.log('Log: processCityDataNames -> src', src);
+  console.log('Log: -------------------------------------');
 	var locId = null;
 	var linesCount = 0;
 	function processLine(line) {
@@ -536,10 +539,11 @@ function processCityDataNames(src, dest, cb) {
 		var cc = fields[4];
 		var rg = fields[6];
 		var city = fields[10];
-		var metro = parseInt(fields[11]);
+		var cityZh = fields[11];
+		var metro = parseInt(fields[12]);
 		//other possible fields to include
-		var tz = fields[12];
-		var eu = fields[13];
+		var tz = fields[13];
+		var eu = fields[14];
 
 		b = Buffer.alloc(sz);
 		b.fill(0);
@@ -552,6 +556,7 @@ function processCityDataNames(src, dest, cb) {
 		b.write(eu,9);//is in eu
 		b.write(tz,10);//timezone
 		b.write(city, 42);//cityname
+		b.write(cityZh, 42);//cityname_zh
 
 		fs.writeSync(datFile, b, 0, b.length, null);
 		linesCount++;
@@ -559,8 +564,11 @@ function processCityDataNames(src, dest, cb) {
 
 	var dataFile = path.join(dataPath, dest);
 	var tmpDataFile = path.join(tmpPath, src);
+  console.log('Log: -----------------------------------------------------');
+  console.log('Log: processCityDataNames -> tmpDataFile', tmpDataFile);
+  console.log('Log: -----------------------------------------------------');
 
-	rimraf(dataFile);
+	// rimraf(dataFile);
 
 	var datFile = fs.openSync(dataFile, "w");
 
@@ -627,12 +635,13 @@ if (!license_key) {
 	process.exit(1);
 }
 
-rimraf(tmpPath);
+// rimraf(tmpPath);
 mkdir(tmpPath);
 
 async.eachSeries(databases, function(database, nextDatabase) {
 
-	async.seq(check, fetch, extract, processData, updateChecksum)(database, nextDatabase);
+	// async.seq(check, fetch, extract, processData, updateChecksum)(database, nextDatabase);
+	async.seq(fetch, extract, processData, updateChecksum)(database, nextDatabase);
 
 }, function(err) {
 	if (err) {
@@ -641,7 +650,7 @@ async.eachSeries(databases, function(database, nextDatabase) {
 	} else {
 		console.log('Successfully Updated Databases from MaxMind.'.green);
 		if (args.indexOf("debug") !== -1) console.log('Notice: temporary files are not deleted for debug purposes.'.bold.yellow);
-		else rimraf(tmpPath);
+		// else rimraf(tmpPath);
 		process.exit(0);
 	}
 });
